@@ -93,7 +93,7 @@ function render(){
   $("#nav").innerHTML=[["pesan","Pesan"],["saya","Pesanan saya"],["admin","Admin"]].map(([k,l])=>`<button data-tab="${k}" class="${S.tab===k?"a":""}">${l}</button>`).join("");
   const v=$("#v"),bar=$("#bar");bar.hidden=true;
   const e=S.err?`<div class="err" role="alert">${esc(S.err)}</div>`:"";
-  if(!ev){v.innerHTML=e+`<div class="card">Belum ada event aktif. Admin bisa membuatnya di tab Admin.</div>`;return}
+  if(!ev){v.innerHTML=e+(S.tab==="admin"?vAdmin():`<div class="card">Belum ada event aktif. Admin bisa membuatnya di tab Admin.</div>`);return}
   v.innerHTML=e+({pesan:vPesan,saya:vSaya,admin:vAdmin}[S.tab])();
   if(S.tab==="pesan"&&open()&&!S.order)barPesan();
 }
@@ -138,6 +138,7 @@ function vSaya(){
 /* ---------- Admin ---------- */
 function vAdmin(){
   if(!S.tok)return `<h2>Masuk admin</h2><div class="card"><label for="pin" style="margin-top:0">PIN 6 digit</label><input id="pin" type="password" inputmode="numeric" maxlength="6" autocomplete="off"><button class="btn full" id="login" style="margin-top:12px">Masuk</button></div>`;
+  if(!S.ev)return `<h2>Belum ada event</h2><div class="card"><p>Buat event pertama, lalu isi nama, pajak, dan menunya.</p><button class="btn full" id="newe" style="margin-top:12px">Buat event pertama</button><button class="btn g full" id="out" style="margin-top:8px">Keluar</button></div>`;
   const tabs=[["order","Pesanan"],["peserta","Rekap peserta"],["resto","Rekap restoran"],["menu","Menu"],["event","Event"]];
   return `<div class="sub">${tabs.map(([k,l])=>`<button data-sub="${k}" class="${S.sub===k?"a":""}">${l}</button>`).join("")}<button id="out">Keluar</button></div>`+({order:aOrder,peserta:aPeserta,resto:aResto,menu:aMenu,event:aEvent}[S.sub])();
 }
@@ -203,7 +204,7 @@ document.addEventListener("click",e=>{
     if(!isNaN(v))return run(async()=>{await api("saveMenu",{id:m.id,name:m.name,price:v,available:m.available});await load()})}
   if(d.delm&&confirm("Hapus menu ini? Pesanan lama tidak berubah."))return run(async()=>{await api("deleteMenu",{id:d.delm});await load()});
   if(id==="savee")return run(async()=>{await api("saveEvent",{name:$("#en").value,date:$("#ed").value,place:$("#ep").value,status:$("#es").value,taxPct:+$("#et").value,servicePct:+$("#ev").value,payInfo:$("#ei").value});await load();toast("Event disimpan")});
-  if(id==="newe"&&confirm("Buat event baru? Daftar pesanan aktif akan dikosongkan."))return run(async()=>{await api("newEvent");S.cart={};await load()});
+  if(id==="newe"&&(!S.ev||confirm("Buat event baru? Daftar pesanan aktif akan dikosongkan.")))return run(async()=>{await api("newEvent");S.cart={};await load()});
 });
 
 load().catch(e=>{S.err=e.message}).finally(render);
